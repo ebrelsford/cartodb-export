@@ -7,6 +7,7 @@ exports['default'] = exportVis;
 exports.getVisUrl = getVisUrl;
 exports.getVisJson = getVisJson;
 exports.downloadVisualizationData = downloadVisualizationData;
+exports.getSublayerSql = getSublayerSql;
 exports.downloadSublayerData = downloadSublayerData;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }

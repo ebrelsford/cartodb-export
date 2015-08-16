@@ -4,7 +4,7 @@
   "description": "Export a visualization from CartoDB",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha",
     "watch": "babel src/index.js --out-file index.js --watch"
   },
   "repository": {
@@ -24,7 +24,9 @@
   },
   "homepage": "https://github.com/ebrelsford/cartodb-export#readme",
   "devDependencies": {
-    "babel": "^5.8.21"
+    "babel": "^5.8.21",
+    "chai": "^3.2.0",
+    "mocha": "^2.2.5"
   },
   "dependencies": {
     "mkdirp": "^0.5.1",

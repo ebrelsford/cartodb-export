@@ -82,7 +82,7 @@ function getLayerSqlUrl(layer) {
     return `${options.sql_api_template}${options.sql_api_endpoint}`.replace('{user}', options.user_name);
 }
 
-function getSublayerSql(sublayer) {
+export function getSublayerSql(sublayer) {
     var sql = sublayer.options.sql,
         geomNotNull = 'the_geom IS NOT NULL';
     if (sql.toLowerCase().indexOf('where') >= 0) {
