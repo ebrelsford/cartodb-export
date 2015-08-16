@@ -1,0 +1,33 @@
+{
+  "name": "cartodb-export",
+  "version": "0.0.1",
+  "description": "Export a visualization from CartoDB",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "babel src/index.js --out-file index.js --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ebrelsford/cartodb-export.git"
+  },
+  "keywords": [
+    "gis",
+    "map",
+    "maps",
+    "cartodb"
+  ],
+  "author": "Eric Brelsford <ebrelsford@gmail.com> (http://ebrelsford.github.io/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ebrelsford/cartodb-export/issues"
+  },
+  "homepage": "https://github.com/ebrelsford/cartodb-export#readme",
+  "devDependencies": {
+    "babel": "^5.8.21"
+  },
+  "dependencies": {
+    "mkdirp": "^0.5.1",
+    "request": "^2.60.0"
+  }
+}
