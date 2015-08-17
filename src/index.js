@@ -13,7 +13,7 @@ import request from 'request';
  * @example
  * exportVis('https://eric.cartodb.com/api/v2/viz/85c59718-082c-11e3-86d3-5404a6a69006/viz.json', 'my_vis');
  */
-export default function exportVis(url, dest = '.') {
+export function exportVis(url, dest = '.') {
     mkdirp(dest, function () {
         getVisJson(url, path.join(dest, 'viz.json'), function (visJson) {
             downloadVisualizationData(visJson, dest);

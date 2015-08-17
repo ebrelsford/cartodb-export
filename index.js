@@ -3,7 +3,7 @@
 Object.defineProperty(exports, '__esModule', {
     value: true
 });
-exports['default'] = exportVis;
+exports.exportVis = exportVis;
 exports.getVisUrl = getVisUrl;
 exports.getVisJson = getVisJson;
 exports.downloadVisualizationData = downloadVisualizationData;
