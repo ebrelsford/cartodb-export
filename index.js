@@ -14,6 +14,10 @@ exports.downloadSublayerData = downloadSublayerData;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
+var _underscore = require('underscore');
+
+var _underscore2 = _interopRequireDefault(_underscore);
+
 var _fs = require('fs');
 
 var _fs2 = _interopRequireDefault(_fs);
@@ -21,6 +25,8 @@ var _fs2 = _interopRequireDefault(_fs);
 var _https = require('https');
 
 var _https2 = _interopRequireDefault(_https);
+
+var _sqlParser = require('sql-parser');
 
 var _mkdirp = require('mkdirp');
 
@@ -149,13 +155,18 @@ function getLayerSqlUrl(layer) {
 
 function getSublayerSql(sublayer) {
     var sql = sublayer.options.sql,
-        geomNotNull = 'the_geom IS NOT NULL';
-    if (sql.toLowerCase().indexOf('where') >= 0) {
-        sql += ' AND ';
+        tokens = _sqlParser.lexer.tokenize(sql),
+        parsed = _sqlParser.parser.parse(tokens),
+        whereCondition = new _sqlParser.nodes.Op('IS NOT', new _sqlParser.nodes.LiteralValue('the_geom'), new _sqlParser.nodes.BooleanValue('NULL'));
+
+    // Parse the original SQL and add 'WHERE the_geom IS NOT NULL' appropriately
+    if (!parsed.where) {
+        parsed.where = new _sqlParser.nodes.Where(whereCondition);
     } else {
-        sql += ' WHERE ';
+        var originalConditions = _underscore2['default'].extend({}, parsed.where.conditions);
+        parsed.where.conditions = new _sqlParser.nodes.Op('AND', originalConditions, whereCondition);
     }
-    return sql + geomNotNull;
+    return parsed.toString().replace(/\n/g, ' ').replace(/`/g, '"');
 }
 
 /**

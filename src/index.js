@@ -1,5 +1,7 @@
+import _ from 'underscore';
 import fs from 'fs';
 import https from 'https';
+import { lexer, nodes, parser } from 'sql-parser';
 import mkdirp from 'mkdirp';
 import path from 'path';
 import request from 'request';
@@ -112,14 +114,19 @@ function getLayerSqlUrl(layer) {
 
 export function getSublayerSql(sublayer) {
     var sql = sublayer.options.sql,
-        geomNotNull = 'the_geom IS NOT NULL';
-    if (sql.toLowerCase().indexOf('where') >= 0) {
-        sql += ' AND ';
+        tokens = lexer.tokenize(sql),
+        parsed = parser.parse(tokens),
+        whereCondition = new nodes.Op('IS NOT', new nodes.LiteralValue('the_geom'), new nodes.BooleanValue('NULL'));
+
+    // Parse the original SQL and add 'WHERE the_geom IS NOT NULL' appropriately
+    if (!parsed.where) {
+        parsed.where = new nodes.Where(whereCondition);
     }
     else {
-        sql += ' WHERE ';
+        var originalConditions = _.extend({}, parsed.where.conditions);
+        parsed.where.conditions = new nodes.Op('AND', originalConditions, whereCondition);
     }
-    return sql + geomNotNull;
+    return parsed.toString().replace(/\n/g, ' ').replace(/`/g, '"');
 }
 
 /**
