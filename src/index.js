@@ -50,7 +50,7 @@ export function getVisJson(url, dest, callback) {
                 });
             }
         });
-    request(url).pipe(file)
+    request(url).pipe(file);
 }
 
 function sublayerDir(destDir, layerIndex, sublayerIndex) {
