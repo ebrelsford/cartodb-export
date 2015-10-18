@@ -6,8 +6,6 @@ import mkdirp from 'mkdirp';
 import path from 'path';
 import request from 'request';
 
-import { cartocss2leaflet } from 'cartocss2leaflet';
-
 /**
  * Export a visualization at the given url.
  *
@@ -21,7 +19,6 @@ export function exportVis(url, dest = '.') {
     mkdirp(dest, function () {
         getVisJson(url, path.join(dest, 'viz.json'), function (visJson) {
             downloadVisualizationData(visJson, dest);
-            convertStyles(visJson, dest);
         });
     });
 }
@@ -88,25 +85,6 @@ function withVisJson(visJson, callback) {
     }
 }
 
-/**
- * Convert the styles for a visualization.
- *
- * @param {Object|String} visJson the visualization's JSON or the url where it
- * can be found
- * @param {String} destDir the base directory where the styles should be saved
- */
-export function convertStyles(_visJson, destDir = '.') {
-    withVisJson(_visJson, (err, visJson) => {
-        visJson.layers.forEach(function (layer, layerIndex) {
-            if (layer.type !== 'layergroup') return;
-            layer.options.layer_definition.layers.forEach(function (sublayer, sublayerIndex) {
-                var dest = path.join(sublayerDir(destDir, layerIndex, sublayerIndex), 'style.json');
-                convertSublayerStyle(visJson, layerIndex, sublayerIndex, dest);
-            });
-        });
-    });
-}
-
 function getLayerSqlUrl(layer) {
     var options = layer.options;
     return `${options.sql_api_template}${options.sql_api_endpoint}`.replace('{user}', options.user_name);
@@ -127,28 +105,6 @@ export function getSublayerSql(sublayer) {
         parsed.where.conditions = new nodes.Op('AND', originalConditions, whereCondition);
     }
     return parsed.toString().replace(/\n/g, ' ').replace(/`/g, '"');
-}
-
-/**
- * Download the data for a single sublayer.
- *
- * @param {Object} visJson the visualization's JSON
- * @param {Number} layerIndex the index of the layer
- * @param {Number} sublayerIndex the index of the sublayer
- * @param {String} dest the directory to save the sublayer's data in
- */
-export function convertSublayerStyle(visJson, layerIndex, sublayerIndex, dest) {
-    var layer = visJson.layers[layerIndex],
-        sublayer = layer.options.layer_definition.layers[sublayerIndex];
-
-    mkdirp(path.dirname(dest), function () {
-        var style = cartocss2leaflet(sublayer.options.cartocss);
-        fs.writeFile(dest, JSON.stringify(style), (err) => {
-            if (err) {
-                console.error(err);
-            }
-        });
-    });
 }
 
 /**

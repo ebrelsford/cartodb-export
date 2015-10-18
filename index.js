@@ -7,9 +7,7 @@ exports.exportVis = exportVis;
 exports.getVisUrl = getVisUrl;
 exports.getVisJson = getVisJson;
 exports.downloadVisualizationData = downloadVisualizationData;
-exports.convertStyles = convertStyles;
 exports.getSublayerSql = getSublayerSql;
-exports.convertSublayerStyle = convertSublayerStyle;
 exports.downloadSublayerData = downloadSublayerData;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
@@ -40,8 +38,6 @@ var _request = require('request');
 
 var _request2 = _interopRequireDefault(_request);
 
-var _cartocss2leaflet = require('cartocss2leaflet');
-
 /**
  * Export a visualization at the given url.
  *
@@ -58,7 +54,6 @@ function exportVis(url) {
     (0, _mkdirp2['default'])(dest, function () {
         getVisJson(url, _path2['default'].join(dest, 'viz.json'), function (visJson) {
             downloadVisualizationData(visJson, dest);
-            convertStyles(visJson, dest);
         });
     });
 }
@@ -126,28 +121,6 @@ function withVisJson(visJson, callback) {
     }
 }
 
-/**
- * Convert the styles for a visualization.
- *
- * @param {Object|String} visJson the visualization's JSON or the url where it
- * can be found
- * @param {String} destDir the base directory where the styles should be saved
- */
-
-function convertStyles(_visJson) {
-    var destDir = arguments.length <= 1 || arguments[1] === undefined ? '.' : arguments[1];
-
-    withVisJson(_visJson, function (err, visJson) {
-        visJson.layers.forEach(function (layer, layerIndex) {
-            if (layer.type !== 'layergroup') return;
-            layer.options.layer_definition.layers.forEach(function (sublayer, sublayerIndex) {
-                var dest = _path2['default'].join(sublayerDir(destDir, layerIndex, sublayerIndex), 'style.json');
-                convertSublayerStyle(visJson, layerIndex, sublayerIndex, dest);
-            });
-        });
-    });
-}
-
 function getLayerSqlUrl(layer) {
     var options = layer.options;
     return ('' + options.sql_api_template + options.sql_api_endpoint).replace('{user}', options.user_name);
@@ -167,29 +140,6 @@ function getSublayerSql(sublayer) {
         parsed.where.conditions = new _sqlParser.nodes.Op('AND', originalConditions, whereCondition);
     }
     return parsed.toString().replace(/\n/g, ' ').replace(/`/g, '"');
-}
-
-/**
- * Download the data for a single sublayer.
- *
- * @param {Object} visJson the visualization's JSON
- * @param {Number} layerIndex the index of the layer
- * @param {Number} sublayerIndex the index of the sublayer
- * @param {String} dest the directory to save the sublayer's data in
- */
-
-function convertSublayerStyle(visJson, layerIndex, sublayerIndex, dest) {
-    var layer = visJson.layers[layerIndex],
-        sublayer = layer.options.layer_definition.layers[sublayerIndex];
-
-    (0, _mkdirp2['default'])(_path2['default'].dirname(dest), function () {
-        var style = (0, _cartocss2leaflet.cartocss2leaflet)(sublayer.options.cartocss);
-        _fs2['default'].writeFile(dest, JSON.stringify(style), function (err) {
-            if (err) {
-                console.error(err);
-            }
-        });
-    });
 }
 
 /**
