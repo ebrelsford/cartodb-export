@@ -104,7 +104,7 @@ function sublayerDir(destDir, layerIndex, sublayerIndex) {
 function downloadVisualizationData(_visJson) {
     var destDir = arguments.length <= 1 || arguments[1] === undefined ? '.' : arguments[1];
 
-    withVisJson(_visJson, function (visJson) {
+    withVisJson(_visJson, function (err, visJson) {
         visJson.layers.forEach(function (layer, layerIndex) {
             if (layer.type !== 'layergroup') return;
             layer.options.layer_definition.layers.forEach(function (sublayer, sublayerIndex) {
@@ -118,11 +118,11 @@ function downloadVisualizationData(_visJson) {
 function withVisJson(visJson, callback) {
     if (typeof visJson === 'string') {
         _fs2['default'].readFile(visJson, function (err, data) {
-            if (err) throw err;
-            callback(JSON.parse(data));
+            if (err) return callback(err);
+            callback(null, JSON.parse(data));
         });
     } else {
-        callback(visJson);
+        callback(null, visJson);
     }
 }
 
@@ -137,7 +137,7 @@ function withVisJson(visJson, callback) {
 function convertStyles(_visJson) {
     var destDir = arguments.length <= 1 || arguments[1] === undefined ? '.' : arguments[1];
 
-    withVisJson(_visJson, function (visJson) {
+    withVisJson(_visJson, function (err, visJson) {
         visJson.layers.forEach(function (layer, layerIndex) {
             if (layer.type !== 'layergroup') return;
             layer.options.layer_definition.layers.forEach(function (sublayer, sublayerIndex) {

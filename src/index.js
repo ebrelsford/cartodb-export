@@ -65,7 +65,7 @@ function sublayerDir(destDir, layerIndex, sublayerIndex) {
  * @param {String} destDir the base directory where the data should be saved
  */
 export function downloadVisualizationData(_visJson, destDir = '.') {
-    withVisJson(_visJson, (visJson) => {
+    withVisJson(_visJson, (err, visJson) => {
         visJson.layers.forEach(function (layer, layerIndex) {
             if (layer.type !== 'layergroup') return;
             layer.options.layer_definition.layers.forEach(function (sublayer, sublayerIndex) {
@@ -79,12 +79,12 @@ export function downloadVisualizationData(_visJson, destDir = '.') {
 function withVisJson(visJson, callback) {
     if (typeof visJson === 'string') {
         fs.readFile(visJson, function (err, data) {
-            if (err) throw err;
-            callback(JSON.parse(data));
+            if (err) return callback(err);
+            callback(null, JSON.parse(data));
         });
     }
     else {
-        callback(visJson);
+        callback(null, visJson);
     }
 }
 
@@ -96,7 +96,7 @@ function withVisJson(visJson, callback) {
  * @param {String} destDir the base directory where the styles should be saved
  */
 export function convertStyles(_visJson, destDir = '.') {
-    withVisJson(_visJson, (visJson) => {
+    withVisJson(_visJson, (err, visJson) => {
         visJson.layers.forEach(function (layer, layerIndex) {
             if (layer.type !== 'layergroup') return;
             layer.options.layer_definition.layers.forEach(function (sublayer, sublayerIndex) {
