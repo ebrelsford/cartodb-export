@@ -5,7 +5,7 @@ var program = require('commander');
 var exportVis = require('../index').exportVis;
 
 program
-    .version('0.0.1')
+    .version('0.1.1')
     .usage('[options] url')
     .option('-d, --dir [directory]', 'Specify the output directory [.]', '.')
     .parse(process.argv);
