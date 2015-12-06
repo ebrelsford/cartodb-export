@@ -1,4 +1,5 @@
 import _ from 'underscore';
+import async from 'async';
 import fs from 'fs';
 import https from 'https';
 import { lexer, nodes, parser } from 'sql-parser';
@@ -15,10 +16,11 @@ import request from 'request';
  * @example
  * exportVis('https://eric.cartodb.com/api/v2/viz/85c59718-082c-11e3-86d3-5404a6a69006/viz.json', 'my_vis');
  */
-export function exportVis(url, dest = '.') {
-    mkdirp(dest, function () {
+export function exportVis(url, dest = '.', callback) {
+    mkdirp(dest, function (err) {
+        if (err && callback) return callback(err);
         getVisJson(url, path.join(dest, 'viz.json'), function (visJson) {
-            downloadVisualizationData(visJson, dest);
+            downloadVisualizationData(visJson, dest, callback);
         });
     });
 }
@@ -61,15 +63,19 @@ function sublayerDir(destDir, layerIndex, sublayerIndex) {
  * can be found
  * @param {String} destDir the base directory where the data should be saved
  */
-export function downloadVisualizationData(_visJson, destDir = '.') {
+export function downloadVisualizationData(_visJson, destDir = '.', callback) {
     withVisJson(_visJson, (err, visJson) => {
-        visJson.layers.forEach(function (layer, layerIndex) {
-            if (layer.type !== 'layergroup') return;
-            layer.options.layer_definition.layers.forEach(function (sublayer, sublayerIndex) {
+        if (err && callback) return callback(err);
+        async.forEachOf(visJson.layers, (layer, layerIndex, callback) => {
+            if (layer.type !== 'layergroup') {
+                if (callback) callback();
+                return;
+            }
+            async.forEachOf(layer.options.layer_definition.layers, (sublayer, sublayerIndex, callback) => {
                 var dest = path.join(sublayerDir(destDir, layerIndex, sublayerIndex), 'layer.geojson');
-                downloadSublayerData(visJson, layerIndex, sublayerIndex, dest);
-            });
-        });
+                downloadSublayerData(visJson, layerIndex, sublayerIndex, dest, callback);
+            }, callback);
+        }, callback);
     });
 }
 
@@ -114,18 +120,26 @@ export function getSublayerSql(sublayer) {
  * @param {Number} layerIndex the index of the layer
  * @param {Number} sublayerIndex the index of the sublayer
  * @param {String} dest the directory to save the sublayer's data in
+ * @param {Function} callback called on success
  */
-export function downloadSublayerData(visJson, layerIndex, sublayerIndex, dest) {
+export function downloadSublayerData(visJson, layerIndex, sublayerIndex, dest, callback) {
     var layer = visJson.layers[layerIndex],
         sublayer = layer.options.layer_definition.layers[sublayerIndex];
 
     mkdirp(path.dirname(dest), function () {
+        var dataFile = fs.createWriteStream(dest)
+            .on('close', function () {
+                if (callback) {
+                    callback();
+                }
+            });
+
         request({
             url: getLayerSqlUrl(layer),
             qs: {
                 format: 'GeoJSON',
                 q: getSublayerSql(sublayer)
             }
-        }).pipe(fs.createWriteStream(dest));
+        }).pipe(dataFile);
     });
 }

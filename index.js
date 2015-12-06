@@ -16,6 +16,10 @@ var _underscore = require('underscore');
 
 var _underscore2 = _interopRequireDefault(_underscore);
 
+var _async = require('async');
+
+var _async2 = _interopRequireDefault(_async);
+
 var _fs = require('fs');
 
 var _fs2 = _interopRequireDefault(_fs);
@@ -48,12 +52,13 @@ var _request2 = _interopRequireDefault(_request);
  * exportVis('https://eric.cartodb.com/api/v2/viz/85c59718-082c-11e3-86d3-5404a6a69006/viz.json', 'my_vis');
  */
 
-function exportVis(url) {
-    var dest = arguments.length <= 1 || arguments[1] === undefined ? '.' : arguments[1];
+function exportVis(url, dest, callback) {
+    if (dest === undefined) dest = '.';
 
-    (0, _mkdirp2['default'])(dest, function () {
+    (0, _mkdirp2['default'])(dest, function (err) {
+        if (err && callback) return callback(err);
         getVisJson(url, _path2['default'].join(dest, 'viz.json'), function (visJson) {
-            downloadVisualizationData(visJson, dest);
+            downloadVisualizationData(visJson, dest, callback);
         });
     });
 }
@@ -96,17 +101,21 @@ function sublayerDir(destDir, layerIndex, sublayerIndex) {
  * @param {String} destDir the base directory where the data should be saved
  */
 
-function downloadVisualizationData(_visJson) {
-    var destDir = arguments.length <= 1 || arguments[1] === undefined ? '.' : arguments[1];
+function downloadVisualizationData(_visJson, destDir, callback) {
+    if (destDir === undefined) destDir = '.';
 
     withVisJson(_visJson, function (err, visJson) {
-        visJson.layers.forEach(function (layer, layerIndex) {
-            if (layer.type !== 'layergroup') return;
-            layer.options.layer_definition.layers.forEach(function (sublayer, sublayerIndex) {
+        if (err && callback) return callback(err);
+        _async2['default'].forEachOf(visJson.layers, function (layer, layerIndex, callback) {
+            if (layer.type !== 'layergroup') {
+                if (callback) callback();
+                return;
+            }
+            _async2['default'].forEachOf(layer.options.layer_definition.layers, function (sublayer, sublayerIndex, callback) {
                 var dest = _path2['default'].join(sublayerDir(destDir, layerIndex, sublayerIndex), 'layer.geojson');
-                downloadSublayerData(visJson, layerIndex, sublayerIndex, dest);
-            });
-        });
+                downloadSublayerData(visJson, layerIndex, sublayerIndex, dest, callback);
+            }, callback);
+        }, callback);
     });
 }
 
@@ -149,19 +158,26 @@ function getSublayerSql(sublayer) {
  * @param {Number} layerIndex the index of the layer
  * @param {Number} sublayerIndex the index of the sublayer
  * @param {String} dest the directory to save the sublayer's data in
+ * @param {Function} callback called on success
  */
 
-function downloadSublayerData(visJson, layerIndex, sublayerIndex, dest) {
+function downloadSublayerData(visJson, layerIndex, sublayerIndex, dest, callback) {
     var layer = visJson.layers[layerIndex],
         sublayer = layer.options.layer_definition.layers[sublayerIndex];
 
     (0, _mkdirp2['default'])(_path2['default'].dirname(dest), function () {
+        var dataFile = _fs2['default'].createWriteStream(dest).on('close', function () {
+            if (callback) {
+                callback();
+            }
+        });
+
         (0, _request2['default'])({
             url: getLayerSqlUrl(layer),
             qs: {
                 format: 'GeoJSON',
                 q: getSublayerSql(sublayer)
             }
-        }).pipe(_fs2['default'].createWriteStream(dest));
+        }).pipe(dataFile);
     });
 }

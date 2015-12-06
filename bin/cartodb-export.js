@@ -18,4 +18,10 @@ if (!program.args.length) {
 
 var url = program.args[0];
 console.log('Saving visualization in ' + program.dir);
-exportVis(url, program.dir);
+exportVis(url, program.dir, function (err) {
+    if (err) {
+        console.error('Error exporting visualization:', err);
+        return;
+    }
+    console.log('Done saving visualization');
+});
