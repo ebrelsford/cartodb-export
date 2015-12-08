@@ -46,3 +46,14 @@ describe('exportVis()', function () {
         });
     });
 });
+
+describe('getVisUrl()', function () {
+    it('should work with public map url', function () {
+        var visJsonUrl = cdbExp.getVisUrl('https://eric.cartodb.com/viz/9e198634-b20e-11e4-8886-0e018d66dc29/public_map');
+        assert.equal(visJsonUrl, 'https://eric.cartodb.com/api/v2/viz/9e198634-b20e-11e4-8886-0e018d66dc29/viz.json');
+    });
+    it('should work with private map url', function () {
+        var visJsonUrl = cdbExp.getVisUrl('https://eric.cartodb.com/viz/9e198634-b20e-11e4-8886-0e018d66dc29/map');
+        assert.equal(visJsonUrl, 'https://eric.cartodb.com/api/v2/viz/9e198634-b20e-11e4-8886-0e018d66dc29/viz.json');
+    });
+});

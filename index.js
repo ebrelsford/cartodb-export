@@ -67,11 +67,21 @@ function exportVis(url, dest, callback) {
     });
 }
 
-function getVisUrl(url) {}
-// TODO convert from
-// https://eric.cartodb.com/viz/85c59718-082c-11e3-86d3-5404a6a69006/public_map
-// to
-// https://eric.cartodb.com/api/v2/viz/85c59718-082c-11e3-86d3-5404a6a69006/viz.json
+/**
+ * Convert a map's url into the viz.json url for that map.
+ *
+ * @param {String} url the map's url
+ * @return {String} the viz.json url, if found
+ */
+
+function getVisUrl(url) {
+    var match = /https?:\/\/(\S+)\.cartodb\.com\/viz\/(\S+)\/(?:public_)?map/.exec(url);
+    if (match) {
+        var user = match[1],
+            mapId = match[2];
+        return 'https://' + user + '.cartodb.com/api/v2/viz/' + mapId + '/viz.json';
+    }
+}
 
 /**
  * Get a visualization JSON file.
