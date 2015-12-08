@@ -5,6 +5,7 @@ import https from 'https';
 import { lexer, nodes, parser } from 'sql-parser';
 import mkdirp from 'mkdirp';
 import path from 'path';
+import ProgressBar from 'progress';
 import request from 'request';
 
 /**
@@ -49,7 +50,27 @@ export function getVisJson(url, dest, callback) {
                 });
             }
         });
-    request(url).pipe(file);
+    var req = request(url);
+    req.pipe(file);
+
+    // Show progress as file downloads
+    req.on('response', function (res) {
+        var len = parseInt(res.headers['content-length'], 10);
+        var bar = new ProgressBar('  downloading [:bar] :percent :etas', {
+            complete: '=',
+            incomplete: ' ',
+            width: 20,
+            total: len
+        });
+
+        res.on('data', function (chunk) {
+            bar.tick(chunk.length);
+        });
+
+        res.on('end', function (chunk) {
+            console.log('\n');
+        });
+    });
 }
 
 function sublayerDir(destDir, layerIndex, sublayerIndex) {
@@ -134,12 +155,33 @@ export function downloadSublayerData(visJson, layerIndex, sublayerIndex, dest, c
                 }
             });
 
-        request({
+        var req = request({
             url: getLayerSqlUrl(layer),
             qs: {
                 format: 'GeoJSON',
                 q: getSublayerSql(sublayer)
             }
-        }).pipe(dataFile);
+        });
+        
+        req.pipe(dataFile);
+
+        // Show progress as file downloads
+        req.on('response', function (res) {
+            var len = parseInt(res.headers['content-length'], 10);
+            var bar = new ProgressBar('  downloading [:bar] :percent :etas', {
+                complete: '=',
+                incomplete: ' ',
+                width: 20,
+                total: len
+            });
+
+            res.on('data', function (chunk) {
+                bar.tick(chunk.length);
+            });
+
+            res.on('end', function (chunk) {
+                console.log('\n');
+            });
+        });
     });
 }

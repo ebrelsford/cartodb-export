@@ -38,6 +38,10 @@ var _path = require('path');
 
 var _path2 = _interopRequireDefault(_path);
 
+var _progress = require('progress');
+
+var _progress2 = _interopRequireDefault(_progress);
+
 var _request = require('request');
 
 var _request2 = _interopRequireDefault(_request);
@@ -86,7 +90,27 @@ function getVisJson(url, dest, callback) {
             });
         }
     });
-    (0, _request2['default'])(url).pipe(file);
+    var req = (0, _request2['default'])(url);
+    req.pipe(file);
+
+    // Show progress as file downloads
+    req.on('response', function (res) {
+        var len = parseInt(res.headers['content-length'], 10);
+        var bar = new _progress2['default']('  downloading [:bar] :percent :etas', {
+            complete: '=',
+            incomplete: ' ',
+            width: 20,
+            total: len
+        });
+
+        res.on('data', function (chunk) {
+            bar.tick(chunk.length);
+        });
+
+        res.on('end', function (chunk) {
+            console.log('\n');
+        });
+    });
 }
 
 function sublayerDir(destDir, layerIndex, sublayerIndex) {
@@ -172,12 +196,33 @@ function downloadSublayerData(visJson, layerIndex, sublayerIndex, dest, callback
             }
         });
 
-        (0, _request2['default'])({
+        var req = (0, _request2['default'])({
             url: getLayerSqlUrl(layer),
             qs: {
                 format: 'GeoJSON',
                 q: getSublayerSql(sublayer)
             }
-        }).pipe(dataFile);
+        });
+
+        req.pipe(dataFile);
+
+        // Show progress as file downloads
+        req.on('response', function (res) {
+            var len = parseInt(res.headers['content-length'], 10);
+            var bar = new _progress2['default']('  downloading [:bar] :percent :etas', {
+                complete: '=',
+                incomplete: ' ',
+                width: 20,
+                total: len
+            });
+
+            res.on('data', function (chunk) {
+                bar.tick(chunk.length);
+            });
+
+            res.on('end', function (chunk) {
+                console.log('\n');
+            });
+        });
     });
 }
