@@ -150,6 +150,10 @@ function downloadVisualizationData(_visJson, destDir, callback) {
     withVisJson(_visJson, function (err, visJson) {
         if (err && callback) return callback(err);
         _async2['default'].forEachOf(visJson.layers, function (layer, layerIndex, callback) {
+            if (layer.type === 'namedmap') {
+                console.error("Layer is not public, cannot download its data. If you own the map and datasets, please change the privacy settings to 'public' and try again.");
+                return callback();
+            }
             if (layer.type !== 'layergroup') {
                 if (callback) callback();
                 return;
