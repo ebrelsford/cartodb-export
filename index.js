@@ -4,6 +4,7 @@ Object.defineProperty(exports, '__esModule', {
     value: true
 });
 exports.exportVis = exportVis;
+exports.isVisUrl = isVisUrl;
 exports.getVisUrl = getVisUrl;
 exports.getVisJson = getVisJson;
 exports.downloadVisualizationData = downloadVisualizationData;
@@ -61,10 +62,18 @@ function exportVis(url, dest, callback) {
 
     (0, _mkdirp2['default'])(dest, function (err) {
         if (err && callback) return callback(err);
-        getVisJson(url, _path2['default'].join(dest, 'viz.json'), function (visJson) {
+        if (!isVisUrl(url)) {
+            url = getVisUrl(url);
+        }
+        getVisJson(url, _path2['default'].join(dest, 'viz.json'), function (err, visJson) {
             downloadVisualizationData(visJson, dest, callback);
         });
     });
+}
+
+function isVisUrl(url) {
+    return (/\/viz\.json$/.exec(url) !== null
+    );
 }
 
 /**
@@ -96,7 +105,7 @@ function getVisJson(url, dest, callback) {
     var file = _fs2['default'].createWriteStream(dest).on('close', function () {
         if (callback) {
             _fs2['default'].readFile(dest, function (err, data) {
-                callback(JSON.parse(data));
+                callback(err, JSON.parse(data));
             });
         }
     });

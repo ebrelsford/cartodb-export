@@ -20,10 +20,17 @@ import request from 'request';
 export function exportVis(url, dest = '.', callback) {
     mkdirp(dest, function (err) {
         if (err && callback) return callback(err);
-        getVisJson(url, path.join(dest, 'viz.json'), function (visJson) {
+        if (!isVisUrl(url)) {
+            url = getVisUrl(url);
+        }
+        getVisJson(url, path.join(dest, 'viz.json'), function (err, visJson) {
             downloadVisualizationData(visJson, dest, callback);
         });
     });
+}
+
+export function isVisUrl(url) {
+    return /\/viz\.json$/.exec(url) !== null;
 }
 
 /**
@@ -54,7 +61,7 @@ export function getVisJson(url, dest, callback) {
         .on('close', function () {
             if (callback) {
                 fs.readFile(dest, function (err, data) {
-                    callback(JSON.parse(data));
+                    callback(err, JSON.parse(data));
                 });
             }
         });
