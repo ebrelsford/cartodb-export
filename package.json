@@ -1,6 +1,6 @@
 {
   "name": "cartodb-export",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Export a visualization from CartoDB",
   "main": "index.js",
   "scripts": {
